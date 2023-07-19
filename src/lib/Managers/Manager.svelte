@@ -1,72 +1,68 @@
 <script>
     import Button, { Group, Label } from '@smui/button';
 	import LinearProgress from '@smui/linear-progress';
-    import {loadPlayers} from '$lib/utils/helper';
+    import {loadPlayers, getLeagueTransactions} from '$lib/utils/helper';
 	import Roster from '../Rosters/Roster.svelte';
 	import TransactionsPage from '../Transactions/TransactionsPage.svelte';
     import { goto } from '$app/navigation';
     import ManagerFantasyInfo from './ManagerFantasyInfo.svelte';
     import ManagerAwards from './ManagerAwards.svelte';
     import { onMount } from 'svelte';
+	import { getDatesActive, getRosterIDFromManagerID, getTeamNameFromTeamManagers } from '$lib/utils/helperFunctions/universalFunctions';
 
-    export let manager, managers, rostersData, users, rosterPositions, transactions, currentManagers, awards, records;
+    export let manager, managers, rostersData, leagueTeamManagers, rosterPositions, transactionsData, awards, records;
 
-    let viewManager = managers[manager];
+    let transactions = transactionsData.transactions;
 
-    let teamTransactions = transactions.filter(t => t.rosters.indexOf(viewManager.roster) > -1);
+    $: viewManager = managers[manager];
 
-    let startersAndReserve = rostersData.startersAndReserve;
+    $: datesActive = getDatesActive(leagueTeamManagers, viewManager.managerID);
+
+    const  startersAndReserve = rostersData.startersAndReserve;
     let rosters = rostersData.rosters;
 
-    let rosterArrNum = viewManager.roster-1;
+    $: ({rosterID, year} = viewManager.managerID ? getRosterIDFromManagerID(leagueTeamManagers, viewManager.managerID) : {rosterID: viewManager.roster, year: null});
 
-    let roster = rosters[rosterArrNum];
+    $: teamTransactions = transactions.filter(t => t.rosters.includes(parseInt(rosterID)));
 
-    let user = users[roster.owner_id];
+    $: roster = rosters[rosterID];
+
+    $: coOwners = year && rosterID ? leagueTeamManagers.teamManagersMap[year][rosterID].managers.length > 1 : roster.co_owners;
+
+    $: commissioner = viewManager.managerID ? leagueTeamManagers.users[viewManager.managerID].is_owner : false;
 
     let players, playersInfo;
     let loading = true;
 
+    const refreshTransactions = async () => {
+        const newTransactions = await getLeagueTransactions(false, true);
+        transactions = newTransactions.transactions;
+    }
+
     onMount(async () => {
-        const playerData = await loadPlayers();
+        if(transactionsData.stale) {
+            refreshTransactions();
+        }
+        const playerData = await loadPlayers(null);
         playersInfo = playerData;
         players = playerData.players;
         loading = false;
 
         if(playerData.stale) {
-            const newPlayerData = await loadPlayers(true);
+            const newPlayerData = await loadPlayers(null, true);
             playersInfo = newPlayerData;
             players = newPlayerData.players;
         }
     })
 
     const changeManager = (newManager, noscroll = false) => {
+        if(!newManager) {
+            goto(`/managers`);
+        }
         manager = newManager;
-        viewManager = managers[newManager];
-
-        teamTransactions = transactions.filter(t => t.rosters.indexOf(viewManager.roster) > -1);
-
-        startersAndReserve = rostersData.startersAndReserve;
-        rosters = rostersData.rosters;
-
-        rosterArrNum = viewManager.roster-1;
-
-        roster = rosters[rosterArrNum];
-
-        user = users[roster.owner_id];
-        goto(`/managers?manager=${manager}`, {noscroll})
+        goto(`/manager?manager=${newManager}`, {noscroll});
     }
-
-    let el, masterOffset, innerWidth;
-
-    const setOffset = (w) => {
-        return el?.getBoundingClientRect() ? el?.getBoundingClientRect().left  : 0;
-    }
-
-    $: masterOffset = setOffset(innerWidth);
 </script>
-
-<svelte:window bind:innerWidth={innerWidth} />
 
 <style>
     .managerContainer {
@@ -163,6 +159,23 @@
         margin-top: 0;
     }
 
+    .commissionerBadge {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 25px;
+        width: 25px;
+        font-weight: 600;
+        border-radius: 15px;
+        background-color: var(--blueTwo);
+        border: 1px solid var(--blueOne);
+    }
+
+    .commissionerBadge span {
+        font-style: normal;
+        color: #fff;
+    }
+
     /* media queries */
 
     @media (max-width: 505px) {
@@ -214,12 +227,19 @@
         <img class="managerPhoto" src="{viewManager.photo}" alt="manager"/>
         <h2>
             {viewManager.name}
-            <div class="teamSub">{roster.co_owners ? 'Co-' : ''}Manager of <i>{user.metadata.team_name ? user.metadata.team_name : user.display_name}</i></div>
+            <div class="teamSub">{coOwners ? 'Co-' : ''}Manager of <i>{getTeamNameFromTeamManagers(leagueTeamManagers, rosterID, year)}</i></div>
         </h2>
         
         <div class="basicInfo">
             <span class="infoChild">{viewManager.location || 'Undisclosed Location'}</span>
-            {#if viewManager.fantasyStart}
+            {#if viewManager.managerID && datesActive.start}
+                <span class="seperator">|</span>
+                {#if datesActive.end}
+                    <span class="infoChild">In the league from '{datesActive.start.toString().substr(2)} to '{datesActive.end.toString().substr(2)}</span>
+                {:else}
+                    <span class="infoChild">In the league since '{datesActive.start.toString().substr(2)}</span>
+                {/if}
+            {:else if viewManager.fantasyStart}
                 <!-- fantasyStart is an optional field -->
                 <span class="seperator">|</span>
                 <span class="infoChild">Playing ff since '{viewManager.fantasyStart.toString().substr(2)}</span>
@@ -234,6 +254,12 @@
                 <!-- favoriteTeam is an optional field -->
                 <span class="seperator">|</span>
                 <img class="infoChild infoTeam" src="https://sleepercdn.com/images/team_logos/nfl/{viewManager.favoriteTeam}.png" alt="favorite team"/>
+            {/if}
+            {#if commissioner}
+                <span class="seperator">|</span>
+                <div class="infoChild commissionerBadge">
+                    <span>C</span>
+                </div>
             {/if}
         </div>
 
@@ -274,10 +300,10 @@
 
     {#if !loading}
         <!-- Favorite player -->
-        <ManagerFantasyInfo {viewManager} {players} />
+        <ManagerFantasyInfo {viewManager} {players} {changeManager} />
     {/if}
 
-    <ManagerAwards tookOver={viewManager.tookOver} {awards} {records} {roster} />
+    <ManagerAwards {leagueTeamManagers} tookOver={viewManager.tookOver} {awards} {records} {rosterID} managerID={viewManager.managerID} />
 
     {#if loading}
         <!-- promise is pending -->
@@ -286,11 +312,11 @@
             <LinearProgress indeterminate />
         </div>
     {:else}
-        <Roster division="1" expanded={false} {rosterPositions} {roster} {users} {players} {startersAndReserve} />
+        <Roster division="1" expanded={false} {rosterPositions} {roster} {leagueTeamManagers} {players} {startersAndReserve} />
     {/if}
 
     <h3>Team Transactions</h3>
-    <div class="managerConstrained" bind:this={el}>
+    <div class="managerConstrained">
         {#if loading}
             <!-- promise is pending -->
             <div class="loading">
@@ -298,7 +324,7 @@
                 <LinearProgress indeterminate />
             </div>
         {:else}
-            <TransactionsPage {playersInfo} transactions={teamTransactions} {currentManagers} {masterOffset} show='both' query='' page={0} perPage={5} />
+            <TransactionsPage {playersInfo} transactions={teamTransactions} {leagueTeamManagers} show='both' query='' page={0} perPage={5} />
         {/if}
     </div>
 

@@ -117,15 +117,14 @@ Generate a custom league page for your Sleeper fantasy football league in just a
 <br />
 
 - Fill each one out as follows:
-    - `"roster" :` give the roster ID for this manager
-        - To find the roster ID for the manager, go back to your website and scroll down to the `Power Rankings` graph (or to any of the graphs in your records page)
-        > ![pRankings](https://storage.googleapis.com/nfl-player-data/pRankings.png)
-
-        <br />
-
-        - The roster ID is the order of the bar chart, the first bar is roster ID 1, the second is roster ID 2, etc.
+    - `"roster" :` **This has been deprecated! You can ignore this field as long as you provide a managerID**
+        - ~~To find the roster ID for the manager, go back to your website and scroll down to the `Power Rankings` graph (or to any of the graphs in your records page)~~ (Power Rankings are no longer in order)
+    - `"managerID" :` the user ID of the manager
+        - To find a manager's user ID, go to `https://api.sleeper.app/v1/league/<your_league_id/users` (for example: https://api.sleeper.app/v1/league/784583295500464128/users) and find the corresponding userID for each manager
+        - This feld was added in version 2.1.0, so you will have to add it manually. Remember when adding it, to place the id within quotes (i.e. `"managerID" : "12345678",`)
     - `"name" :` The name of this manager
-    - `"tookOver" :` If this manager took over an orphaned team in your league, give the year they took over. Otherwise set this to `null`
+    - `"tookOver" :` **This has been deprecated! You can ignore this field as long as you provide a managerID**
+        - If this manager took over an orphaned team in your league, give the year they took over. Otherwise set this to `null`
     - `"location" :` Where is this manager based out of (City, State, Country, whatever floats your boat)
     - `"bio" :` This manager's bio. If you don't have a bio yet, leave it as is and come back and edit this again when you have the bio.
     - `"photo" :` This manager's photo. To upload a photo:
@@ -192,10 +191,14 @@ Generate a custom league page for your Sleeper fantasy football league in just a
     ![Space ID](https://storage.googleapis.com/nfl-player-data/getSpaceID.jpg)
     - Create a Content Management API key and copy down the value
     ![API key settings](https://storage.googleapis.com/nfl-player-data/apiKeySettings.jpg)
-    ![add API key](https://storage.googleapis.com/nfl-player-data/addApiKey.jpg)
+    ![add Content Management API key](https://storage.googleapis.com/nfl-player-data/addApiKey.jpg)
     ![API key](https://storage.googleapis.com/nfl-player-data/generatePersonalToken.jpg)
     ![API key](https://storage.googleapis.com/nfl-player-data/generate.jpg)
     ![API key](https://storage.googleapis.com/nfl-player-data/copyPersonalToken.jpg)
+    - Create a Content Delivery / Preview API key and copy down the `Content Delivery API - access token` value
+    ![API key settings](https://storage.googleapis.com/nfl-player-data/apiKeySettings.jpg)
+    ![add Content Delivery / Preview API API key](https://storage.googleapis.com/nfl-player-data/content-delivery-step-1-min.jpg)
+    ![Copy](https://storage.googleapis.com/nfl-player-data/content-delivery-step-2-min.jpg)
     - Now, go back to Vercel go to your project settings
     ![project settings](https://storage.googleapis.com/nfl-player-data/projectSettings.jpg)
     - Go to the environment variables section
@@ -203,8 +206,10 @@ Generate a custom league page for your Sleeper fantasy football league in just a
     - Add the values using the following names
         - name: `VITE_CONTENTFUL_SPACE` value: `Space ID (from contentful)`
         - name: `VITE_CONTENTFUL_ACCESS_TOKEN` value: `Content Management API - access token (from contentful)`
+        - name: `VITE_CONTENTFUL_CLIENT_ACCESS_TOKEN` value: `Content Delivery API - access token (from contentful)`
     ![contentful space](https://storage.googleapis.com/nfl-player-data/contentfulSpace.jpg)
     ![contentful API token](https://storage.googleapis.com/nfl-player-data/contentfulAPIKey.jpg)
+    ![contentful delivery API token](https://storage.googleapis.com/nfl-player-data/vercel%20step%203-min.jpg)
     - Go back to GitHub and scroll back up to the top of `/src/lib/utils/leagueInfo.js`
     - Click the edit button and set `enableBlog` to true
     - Scroll down and click `Commit changes`
@@ -236,7 +241,8 @@ Generate a custom league page for your Sleeper fantasy football league in just a
 ## V. Wrapping up
 
 - That's it. You've built out your own league website!
-- If  you want to delve further, you can also edit your league constitution page `/src/routes/constitution/index.svelte`
+- If you want to replace the league page logo with your league's own logo, replece `static/badge.png` with your own 120px x 120px png file (using the same name)
+- If  you want to delve further, you can also edit your league constitution page `/src/routes/constitution/+page.svelte`
     - This page is primarily HTML, so you can edit this in a similar way to how you edited the homepage
 - If you and your league like League Page, please consider <b><a href="https://www.buymeacoffee.com/nmelhado" target="_blank">donating</a></b> (and encouraging your league-mates to too!)
 <div align="center">

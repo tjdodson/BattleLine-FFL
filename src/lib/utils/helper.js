@@ -3,18 +3,19 @@ import {dues, leagueID, leagueName, dynasty, managers, homepageText, enableBlog}
 import {getLeagueTransactions} from './helperFunctions/leagueTransactions';
 import {getNflState} from './helperFunctions/nflState';
 import {getLeagueRosters} from './helperFunctions/leagueRosters';
-import {getLeagueUsers} from './helperFunctions/leagueUsers';
+import {getLeagueTeamManagers} from './helperFunctions/leagueTeamManagers';
 import {getLeagueMatchups} from './helperFunctions/leagueMatchups'
+import {getRivalryMatchups} from './helperFunctions/rivalryMatchups'
 import {getNews, stringDate} from './helperFunctions/news';
 import {loadPlayers} from './helperFunctions/players';
 import { waitForAll } from './helperFunctions/multiPromise';
 import { getUpcomingDraft, getPreviousDrafts } from './helperFunctions/leagueDrafts'
 import { getLeagueRecords } from './helperFunctions/leagueRecords'
 import { getAwards } from './helperFunctions/leagueAwards'
-import { cleanName, round, generateGraph, gotoManager, getAuthor, parseDate, getAvatar } from './helperFunctions/universalFunctions';
+import { cleanName, round, generateGraph, getTeamFromTeamManagers, gotoManager, getAuthor, parseDate, getAvatar } from './helperFunctions/universalFunctions';
 import { predictScores } from './helperFunctions/predictOptimalScore';
 import { getBrackets } from './helperFunctions/leagueBrackets';
-import { getBlogPosts } from './helperFunctions/getBlogPosts';
+import { getBlogPosts, generateParagraph } from './helperFunctions/getBlogPosts';
 import { getLeagueStandings } from './helperFunctions/leagueStandings';
 
 export {
@@ -26,8 +27,9 @@ export {
     getLeagueTransactions,
     getNflState, 
     getLeagueRosters,
-    getLeagueUsers,
+    getLeagueTeamManagers,
     getLeagueMatchups,
+    getRivalryMatchups,
     getNews,
     loadPlayers,
     waitForAll,
@@ -45,9 +47,11 @@ export {
     getBrackets,
     generateGraph,
     getBlogPosts,
+    generateParagraph,
     predictScores,
     getLeagueStandings,
     getAuthor,
     parseDate,
     getAvatar,
+    getTeamFromTeamManagers,
 }

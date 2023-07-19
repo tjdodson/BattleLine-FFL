@@ -1,23 +1,15 @@
 <script>
-    import BarChart from '$lib/BarChart.svelte';
-    import { generateGraph, round, predictScores, loadPlayers } from '$lib/utils/helper';
-    export let nflState, rostersData, users, playersInfo, leagueData;
+	import BarChart from '$lib/BarChart.svelte';
+    import { generateGraph, getTeamFromTeamManagers, round, predictScores, loadPlayers } from '$lib/utils/helper';
+    export let nflState, rostersData, leagueTeamManagers, playersInfo, leagueData;
 
     const rosters = rostersData.rosters;
-
-    const currentManagers = {};
-
-    for(const roster of rosters) {
-        const user = users[roster.owner_id];
-        currentManagers[roster.roster_id] = {
-            avatar: `https://sleepercdn.com/avatars/thumbs/${user.avatar}`,
-            name: user.metadata.team_name ? user.metadata.team_name : user.display_name,
-        }
-    }
 
     let validGraph = false;
 
     let graphs = [];
+
+    let seasonOver = false;
 
     const buildRankings = () => {
         const rosterPowers = [];
@@ -27,7 +19,8 @@
         }
         let max = 0;
 
-        for(const roster of rosters) {
+        for(const rosterID in rosters) {
+            const roster = rosters[rosterID];
             // make sure the roster has players on it
             if(!roster.players) continue;
             // if at least one team has players, create the graph
@@ -36,6 +29,7 @@
             const rosterPlayers = [];
 
             for(const rosterPlayer of roster.players) {
+                if(!players[rosterPlayer]) contnue;
                 rosterPlayers.push({
                     name: players[rosterPlayer].ln,
                     pos: players[rosterPlayer].pos,
@@ -44,11 +38,14 @@
             }
 
             const rosterPower = {
-                rosterID: roster.roster_id,
-                manager: currentManagers[roster.roster_id],
+                rosterID,
+                manager: getTeamFromTeamManagers(leagueTeamManagers, rosterID),
                 powerScore: 0,
             }
             const seasonEnd = 18;
+            if(week >= seasonEnd) {
+                seasonOver = true;
+            }
             for(let i = week; i < seasonEnd; i++) {
                 rosterPower.powerScore += predictScores(rosterPlayers, i, leagueData);
             }
@@ -73,7 +70,7 @@
         };
 
         graphs = [
-            generateGraph(powerGraph, 10)
+            generateGraph(powerGraph, leagueData.season),
         ]
     }
 
@@ -82,7 +79,7 @@
     buildRankings();
 
     const refreshPlayers = async () => {
-        const newPlayersInfo = await loadPlayers(true);
+        const newPlayersInfo = await loadPlayers(null, true);
         players = newPlayersInfo.players;
         buildRankings();
     }
@@ -93,23 +90,7 @@
 
     let curGraph = 0;
 
-    let el;
-    let maxWidth = 620;
-
-
-    const resize = (w) => {
-        const left = el?.getBoundingClientRect() ? el?.getBoundingClientRect().left  : 0;
-        const right = el?.getBoundingClientRect() ? el?.getBoundingClientRect().right  : 0;
-
-        maxWidth = right - left;
-    }
-    let innerWidth;
-
-    $: resize(innerWidth);
-
 </script>
-
-<svelte:window bind:innerWidth={innerWidth} />
 
 <style>
     .enclosure {
@@ -119,8 +100,8 @@
     }
 </style>
 
-{#if validGraph}
-    <div class="enclosure" bind:this={el}>
-        <BarChart {maxWidth} {graphs} bind:curGraph={curGraph} />
+{#if validGraph && !seasonOver}
+    <div class="enclosure">
+        <BarChart {graphs} bind:curGraph={curGraph} {leagueTeamManagers} />
     </div>
 {/if}

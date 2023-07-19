@@ -1,12 +1,13 @@
 <script>
     import { goto } from "$app/navigation";
     import Pagination from "$lib/Pagination.svelte";
-    import { getBlogPosts, leagueName } from "$lib/utils/helper";
+    import { getBlogPosts, leagueName, waitForAll } from "$lib/utils/helper";
     import LinearProgress from "@smui/linear-progress";
     import { onMount } from "svelte";
     import Post from "./Post.svelte";
+    import { browser } from '$app/environment';
 
-    export let postsData, usersData, rostersData, queryPage = 1, filterKey = '';
+    export let postsData, leagueTeamManagersData, queryPage = 1, filterKey = '';
 
     let page = queryPage - 1;
 
@@ -15,41 +16,43 @@
     let loading = true;
     let allPosts = [];
     let posts = [];
-    let users = {};
-    let rosters = [];
+    let leagueTeamManagers = {};
 
     let categories;
 
     const filterPosts = (ap, fk) => {
         if(ap.length && fk != '') {
-            posts = ap.filter(p => p.fields.type[lang] == fk);
+            posts = ap.filter(p => p.fields.type == fk);
         } else {
             posts = ap;
         }
     }
 
+    const changeFilter = (fk) => {
+        page = 0;
+        filterKey = fk;
+    }
+
     $: filterPosts(allPosts, filterKey);
 
     onMount(async ()=> {
-        const startPostData = await postsData;
-        users = await usersData;
-        const rostersInfo = await rostersData;
-        rosters = rostersInfo.rosters;
+        const [startPostData, leagueTeamManagersResp] = await waitForAll(postsData, leagueTeamManagersData);
+        leagueTeamManagers = leagueTeamManagersResp;
         allPosts = startPostData.posts;
         loading = false;
 
         const categoryMap = new Set();
         for(const post of startPostData.posts) {
-            categoryMap.add(post.fields.type[lang]);
+            categoryMap.add(post.fields.type);
         }
         categories = [...categoryMap];
 
         if(!startPostData.fresh) {
-            const blogResponse = await getBlogPosts(true);
+            const blogResponse = await getBlogPosts(null, true);
             allPosts = blogResponse.posts;
             const categoryMap = new Set();
             for(const post of blogResponse.posts) {
-                categoryMap.add(post.fields.type[lang]);
+                categoryMap.add(post.fields.type);
             }
             categories = [...categoryMap];
         }
@@ -66,12 +69,14 @@
     let direction = 1;
 
     const changePage = (dest) => {
-        if(dest + 1 > queryPage) {
-            direction = 1;
-        } else {
-            direction = -1;
+        if (browser) {
+            if(dest + 1 > queryPage) {
+                direction = 1;
+            } else {
+                direction = -1;
+            }
+            goto(`/blog?page=${dest + 1}&filter=${filterKey}`, {noscroll: true,  keepfocus: true});
         }
-        setTimeout(() => {goto(`/blog?page=${dest + 1}&filter=${filterKey}`, {noscroll: true,  keepfocus: true})}, 800);
     }
 
 	$: changePage(page);
@@ -147,17 +152,19 @@
     <div class="filterButtons">
         {#if filterKey == ''}
             {#each categories as category}
-                <a class="noUnderline" href="/blog?filter={category}&page=1"><div class="filter filterLink">{category}</div></a>
+                <a class="noUnderline" on:click={() => changeFilter(category)} href="/blog?filter={category}&page=1"><div class="filter filterLink">{category}</div></a>
             {/each}
         {:else}
-            <div class="filteringBy">Showing <div class="filter filterLink noHover">{filterKey}</div> posts <a class="noUnderline" href="/blog?filter=&page=1"><div class="filter filterClear">Clear Filter</div></a></div>
+            <div class="filteringBy">Showing <div class="filter filterLink noHover">{filterKey}</div> posts <a class="noUnderline" on:click={() => changeFilter('')} href="/blog?filter=&page=1"><div class="filter filterClear">Clear Filter</div></a></div>
         {/if}
     </div>
 
     <Pagination {perPage} {total} bind:page={page} target={top} scroll={false} />
 
     {#each displayPosts as post}
-        <Post {rosters} {users} createdAt={post.sys.createdAt} post={post.fields} id={post.sys.id} {direction} />
+        {#key post.sys.id}
+        <Post {leagueTeamManagers} createdAt={post.sys.createdAt} post={post.fields} id={post.sys.id} {direction} />
+        {/key}
     {/each}
     <Pagination {perPage} {total} bind:page={page} target={top} scroll={true} />
 {/if}
