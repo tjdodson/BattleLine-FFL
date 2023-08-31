@@ -157,4 +157,5 @@
     font-size: 0.8em;
     margin-top: 0;
   }
+</style>
 </div>
