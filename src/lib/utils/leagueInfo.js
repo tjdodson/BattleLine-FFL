@@ -1,5 +1,6 @@
 /*   STEP 1   */
-export const leagueID = "854418328347840512"; // your league ID
+// export const oldleagueID = "854418328347840512";
+export const leagueID = "918033022480596992"; // your league ID
 export const leagueName = "BattleLine FFL"; // your league name
 export const dues = 30; // (optional) used in template constitution page
 export const dynasty = true; // true for dynasty leagues, false for redraft and keeper
@@ -7,7 +8,7 @@ export const enableBlog = true; // requires VITE_CONTENTFUL_ACCESS_TOKEN and VIT
 
 /*   STEP 2   */
 export const homepageText = `
-  <p>Nothing to see here, move along....</p>
+  <p></p>
 `;
 
 /*   STEP 3   */
