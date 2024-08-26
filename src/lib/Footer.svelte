@@ -100,8 +100,8 @@
 	-->
   <!-- You can remove the donation link (although any donations to help
 	maintain and enhance League Page would be greatly appreciated!) -->
-  Powered By: <a href="http://www.nmelhado.com/">League Page</a>? Please
-  consider donating to
+  Powered By: <a href="http://www.nmelhado.com/">League Page</a> Please consider
+  donating to
   <a href="https://www.buymeacoffee.com/nmelhado">Nicholas Melhado</a> to support
   enhancements or just to say thank you!
 </footer>
