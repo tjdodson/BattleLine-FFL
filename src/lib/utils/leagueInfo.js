@@ -8,7 +8,7 @@ export const enableBlog = true; // requires VITE_CONTENTFUL_ACCESS_TOKEN and VIT
 
 /*   STEP 2   */
 export const homepageText = `
-  <p></p>
+  <p>Get ready for the ultimate showdown in the Heartland: Battle-Line, a fantasy football league that pits the best of Missouri against the best of Arkansas. For nearly a decade, rivalries have been forged and friendships have been tested on the gridiron of our virtual world. What started as a casual competition among disparate college buddies has evolved into a beloved tradition, with teams from the Arch and Diamond divisions representing both sides of the state line vying for supremacy.</p>
 `;
 
 /*   STEP 3   */
